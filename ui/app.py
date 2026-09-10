@@ -18,7 +18,7 @@ import taste_profile
 from auth import auth_bp, require_auth
 from extensions import limiter
 
-# JSON structured logging (clone of nas-share-ui pattern)
+# JSON structured logging, one object per line on stdout
 class _JSONFormatter(logging.Formatter):
     def format(self, record):
         out = {
@@ -59,7 +59,7 @@ app.register_blueprint(auth_bp)
 
 @app.before_request
 def _csrf_check():
-    """Match nas-share-ui: every non-GET /api/* call must come from same-origin XHR."""
+    """CSRF guard: every non-GET /api/* call must come from same-origin XHR."""
     if request.method in {"GET", "HEAD", "OPTIONS"}:
         return None
     if not request.path.startswith("/api/"):

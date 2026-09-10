@@ -1,8 +1,9 @@
 """Auth: bcrypt + Flask session, forgot-password email, env-marker write-back.
 
-Cloned-and-stripped from nas-share-ui. Drops the appdb persistent log (recsbot-ui has no
-SQLite); keeps the .env-changed marker pattern so cron 6 (recsbot version) syncs the
-new bcrypt hash into the Custom App YAML.
+There is no persistent audit database. After a password change the new bcrypt
+hash is written back to the environment file and an .env-changed marker is left
+for an optional host-side job that propagates it to the deployment
+configuration.
 """
 from __future__ import annotations
 
