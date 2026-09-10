@@ -1,11 +1,11 @@
-# recsbot-ui
+# recsbot web UI
 
 Authenticated Flask frontend for the recsbot recommendation service. It proxies
 the backend's JSON and SSE APIs, maintains the browser session, and optionally
 adds read-only Steam and Jellyfin taste data.
 
-The frontend has no cloud dependency. By default it expects a local
-`recsbot-backend` at `http://127.0.0.1:8000`; in Docker it uses
+The frontend has no cloud dependency. By default it expects the backend from
+`../backend` at `http://127.0.0.1:8000`; in Docker it uses
 `http://host.docker.internal:8000`.
 
 ## Local setup
@@ -19,8 +19,9 @@ python scripts/init-local-env.py
 make run
 ```
 
-Open <http://127.0.0.1:5001>. Start the backend separately and use the same
-`RECSBOT_BEARER_TOKEN` in both projects when a token is configured.
+Open <http://127.0.0.1:5001>. Start the backend separately (see `../backend`).
+When the backend has a token, set `RECSBOT_BEARER_TOKEN` here to the same value
+as the backend's `RECSBOT_AUTH_TOKEN`; the UI sends it as `X-Recsbot-Token`.
 
 Steam and Jellyfin are optional. Leaving their IDs and keys empty produces an
 empty taste profile without breaking chat.
@@ -67,5 +68,5 @@ and narrow/mobile layouts after frontend changes.
 
 ## License
 
-Application source is available under the [MIT License](LICENSE). Bundled font
-licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Application source is available under the [MIT License](../LICENSE). Bundled
+font licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

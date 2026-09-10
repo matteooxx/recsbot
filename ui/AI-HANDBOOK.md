@@ -1,12 +1,12 @@
-# AI Handbook: recsbot-ui
+# AI Handbook: recsbot web UI
 
-Read this file before changing the frontend.
+Read `../AI-HANDBOOK.md` first, then this file before changing the frontend.
 
 ## Status And Scope
 
 This personal project is a technically public-ready snapshot. It is an
-authenticated Flask frontend and SSE proxy for `../recsbot-backend`, with
-optional read-only Steam and Jellyfin taste adapters.
+authenticated Flask frontend and SSE proxy for `../backend`, with optional
+read-only Steam and Jellyfin taste adapters.
 
 The frontend has no cloud requirement and must continue to work with the local
 backend.
@@ -33,7 +33,7 @@ Do not reintroduce a global `verify=False`; install a private CA where needed.
 
 | Former hosted component | PC/NAS replacement |
 | --- | --- |
-| Lambda/Bedrock chat endpoint | local `recsbot-backend` at `127.0.0.1:8000` |
+| Lambda/Bedrock chat endpoint | local backend (`../backend`) at `127.0.0.1:8000` |
 | EC2 signing proxy | direct HTTP/HTTPS connection to the local backend |
 | Secrets Manager | generated values in ignored `runtime/app.env` |
 | Hosted media integrations | optional direct read-only Steam/Jellyfin adapters |

@@ -1,12 +1,13 @@
-# AI Handbook: recsbot-backend
+# AI Handbook: recsbot backend
 
-Read this file before changing the backend or its API contract.
+Read `../AI-HANDBOOK.md` first, then this file before changing the backend or
+its API contract.
 
 ## Status And Scope
 
 This personal project is a technically public-ready snapshot. It provides
 conversation, preference, feedback, recommendation, and SSE chat APIs for
-`../recsbot-ui`.
+`../ui`.
 
 Local mode is the supported default. The AWS SAM stack is optional reference
 functionality and must not be required for tests or normal development.

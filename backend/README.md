@@ -1,4 +1,4 @@
-# recsbot-backend
+# recsbot backend
 
 Recommendation-chat API with conversations, preferences, feedback, local
 library context, and server-sent events.
@@ -52,7 +52,9 @@ with a firewall or authenticated reverse proxy.
 - preferences read/update
 - assistant feedback
 
-Clients send `X-Recsbot-Token` when a token is configured.
+Clients send `X-Recsbot-Token` when a token is configured. The backend reads
+the token from `RECSBOT_AUTH_TOKEN`; the web UI in `../ui` sends the same value
+from its `RECSBOT_BEARER_TOKEN`.
 
 ## Checks
 
@@ -69,4 +71,4 @@ availability, and the complete change set before deployment.
 
 ## License
 
-This project is available under the [MIT License](LICENSE).
+This project is available under the [MIT License](../LICENSE).
