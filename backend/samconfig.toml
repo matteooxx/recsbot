@@ -1,0 +1,9 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "recsbot-backend"
+region = "eu-west-1"
+s3_prefix = "recsbot-backend"
+confirm_changeset = false
+capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
+resolve_s3 = true

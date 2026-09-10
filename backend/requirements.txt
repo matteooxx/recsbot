@@ -1,0 +1,7 @@
+boto3==1.35.92
+fastapi==0.141.1
+httpx==0.28.1
+pydantic==2.10.4
+python-ulid==3.0.0
+starlette==1.6.0
+uvicorn==0.34.0

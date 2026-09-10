@@ -1,0 +1,38 @@
+services:
+  backend:
+    build:
+      context: .
+    image: recsbot-backend:local
+    restart: unless-stopped
+    init: true
+    read_only: true
+    environment:
+      APP_MODE: local
+      STORAGE_BACKEND: sqlite
+      MODEL_BACKEND: ${MODEL_BACKEND:-deterministic}
+      AUTH_BACKEND: environment
+      LOCAL_DB_PATH: /data/recsbot.db
+      RECSBOT_AUTH_TOKEN: ${RECSBOT_AUTH_TOKEN:-}
+      USER_ID: ${USER_ID:-default-user}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+    ports:
+      - "${RECSBOT_BIND_ADDRESS:-127.0.0.1}:${RECSBOT_PORT:-8000}:8000"
+    volumes:
+      - ./runtime:/data:rw
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).read()"
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3

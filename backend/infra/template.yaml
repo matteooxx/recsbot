@@ -1,0 +1,230 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Optional AWS deployment for the recsbot recommendation backend
+
+Parameters:
+  BedrockInferenceProfileId:
+    Type: String
+    Default: eu.anthropic.claude-sonnet-4-6
+  BearerTokenSecretName:
+    Type: String
+    Default: recsbot/bearer-token
+  TavilySecretName:
+    Type: String
+    Default: recsbot/tavily
+  LambdaWebAdapterLayerArn:
+    Type: String
+    Description: |
+      Full ARN of a trusted arm64 Lambda Web Adapter layer in the deployment
+      region. Obtain the current ARN from the vendor's official release notes.
+  AlertEmail:
+    Type: String
+    Description: Address that receives optional budget notifications
+  BedrockMonthlyBudgetUSD:
+    Type: Number
+    Default: 15
+    Description: Monthly Bedrock spend (USD) above which alerts fire
+  EC2InvokerRoleArn:
+    Type: String
+    Default: ''
+    Description: |
+      Optional IAM role ARN allowed to invoke the Function URL with SigV4.
+      Leave empty when invocation permissions are managed outside this stack.
+
+Conditions:
+  HasInvokerRole: !Not [!Equals [!Ref EC2InvokerRoleArn, '']]
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [arm64]
+    Timeout: 300            # 5 min upper bound; chat usually finishes in <60s
+    MemorySize: 1024        # 1 vCPU equivalent on arm64
+    LoggingConfig:
+      LogFormat: JSON
+      ApplicationLogLevel: INFO
+      SystemLogLevel: WARN
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref RecsbotTable
+        BEDROCK_INFERENCE_PROFILE_ID: !Ref BedrockInferenceProfileId
+        BEARER_TOKEN_SECRET: !Ref BearerTokenSecretName
+        TAVILY_SECRET: !Ref TavilySecretName
+        USER_ID: default-user
+        APP_MODE: aws
+        STORAGE_BACKEND: dynamodb
+        MODEL_BACKEND: bedrock
+        AUTH_BACKEND: secrets-manager
+        AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap   # Lambda Web Adapter
+        PORT: '8000'
+
+Resources:
+
+  RecsbotTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: recsbot
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: gsi1pk
+          AttributeType: S
+        - AttributeName: gsi1sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: gsi1
+          KeySchema:
+            - AttributeName: gsi1pk
+              KeyType: HASH
+            - AttributeName: gsi1sk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  ChatFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: recsbot-chat
+      CodeUri: ../src/
+      Handler: run.sh                # Lambda Web Adapter convention
+      ReservedConcurrentExecutions: 3
+      Layers:
+        - !Ref LambdaWebAdapterLayerArn
+      Environment:
+        Variables:
+          AWS_LWA_INVOKE_MODE: response_stream
+      FunctionUrlConfig:
+        # The Function URL requires SigV4. Application bearer auth remains a
+        # second layer, using X-Recsbot-Token.
+        AuthType: AWS_IAM
+        InvokeMode: RESPONSE_STREAM
+        Cors:
+          AllowOrigins: ['*']
+          AllowHeaders: ['authorization', 'content-type', 'x-amz-date', 'x-amz-security-token', 'x-amz-content-sha256', 'x-recsbot-token']
+          AllowMethods: ['POST', 'GET', 'PATCH', 'DELETE']
+      Policies:
+        - Statement:
+            - Sid: BedrockInvoke
+              Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+                - bedrock:InvokeModelWithResponseStream
+              Resource:
+                - !Sub arn:aws:bedrock:eu-west-1:${AWS::AccountId}:inference-profile/${BedrockInferenceProfileId}
+                - arn:aws:bedrock:eu-west-1::foundation-model/anthropic.claude-sonnet-4-6*
+                - arn:aws:bedrock:eu-central-1::foundation-model/anthropic.claude-sonnet-4-6*
+                - arn:aws:bedrock:eu-north-1::foundation-model/anthropic.claude-sonnet-4-6*
+                - arn:aws:bedrock:eu-south-1::foundation-model/anthropic.claude-sonnet-4-6*
+                - arn:aws:bedrock:eu-south-2::foundation-model/anthropic.claude-sonnet-4-6*
+                - arn:aws:bedrock:eu-west-3::foundation-model/anthropic.claude-sonnet-4-6*
+            - Sid: DynamoAccess
+              Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+                - dynamodb:DeleteItem
+                - dynamodb:Query
+                - dynamodb:BatchWriteItem
+              Resource:
+                - !GetAtt RecsbotTable.Arn
+                - !Sub ${RecsbotTable.Arn}/index/gsi1
+            - Sid: SecretsRead
+              Effect: Allow
+              Action: secretsmanager:GetSecretValue
+              Resource:
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${BearerTokenSecretName}-*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${TavilySecretName}-*
+
+  ChatFunctionEC2InvokeUrlPerm:
+    Type: AWS::Lambda::Permission
+    Condition: HasInvokerRole
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref ChatFunction
+      Principal: !Ref EC2InvokerRoleArn
+      FunctionUrlAuthType: AWS_IAM
+
+  ChatFunctionEC2InvokePerm:
+    Type: AWS::Lambda::Permission
+    Condition: HasInvokerRole
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ChatFunction
+      Principal: !Ref EC2InvokerRoleArn
+
+  ChatLogRetention:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${ChatFunction}
+      RetentionInDays: 30
+
+  # ---------- Cost guardrails (M8) ----------
+
+  # Optional destination for provider-side model invocation logging.
+  BedrockInvocationLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/bedrock/recsbot
+      RetentionInDays: 30
+
+  # Dedicated model spend budget with actual and forecast notifications.
+  BedrockBudget:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetName: recsbot-bedrock-monthly
+        BudgetType: COST
+        TimeUnit: MONTHLY
+        BudgetLimit:
+          Amount: !Ref BedrockMonthlyBudgetUSD
+          Unit: USD
+        CostFilters:
+          Service:
+            - Amazon Bedrock
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 80
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref AlertEmail
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 100
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref AlertEmail
+        - Notification:
+            NotificationType: FORECASTED
+            ComparisonOperator: GREATER_THAN
+            Threshold: 100
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref AlertEmail
+
+Outputs:
+  FunctionUrl:
+    Description: Function URL for the chat Lambda (streaming + non-streaming endpoints)
+    Value: !GetAtt ChatFunctionUrl.FunctionUrl
+  TableName:
+    Description: DynamoDB table name
+    Value: !Ref RecsbotTable
