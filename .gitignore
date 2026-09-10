@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+
+# Populated environment files and secrets; only *.example templates are
+# tracked.
+.env
+.env.*
+!.env.example
+*.env
+!*.env.example
+samconfig.local.toml
+.secrets-do-not-commit/
+.scratch/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Runtime data
+runtime/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.log
+
+# AWS SAM build output
+.aws-sam/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+node_modules/

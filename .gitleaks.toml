@@ -1,0 +1,7 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "AWS Secrets Manager resource name, not the stored Tavily key"
+regexTarget = "match"
+regexes = ['''TAVILY_SECRET", "recsbot/tavily"''']
