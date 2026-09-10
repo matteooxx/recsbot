@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>recsbot</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preload" href="/static/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/static/fonts/intertight-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body class="app-layout">
+<button class="sidebar-toggle" id="sidebarToggle" aria-label="Apri menu" aria-expanded="false" aria-controls="sidebar">
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+
+<aside class="sidebar" id="sidebar" aria-label="Conversazioni">
+  <div class="sidebar-header">
+    <div class="brand">
+      <span class="brand-name"><span class="brand-mark" aria-hidden="true">🎯</span> recs<em>bot</em></span>
+      <button class="icon-btn" id="settingsBtn" title="Impostazioni" aria-label="Impostazioni">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+    <button class="new-chat-btn" id="newChatBtn">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nuova chat
+    </button>
+  </div>
+  <div class="sidebar-tabs" role="tablist">
+    <button class="tab active" data-tab="live" role="tab" aria-selected="true">Conversazioni</button>
+    <button class="tab" data-tab="trash" role="tab" aria-selected="false">Cestino</button>
+  </div>
+  <div class="conv-list" id="convList" role="tabpanel"></div>
+  <div class="sidebar-footer">
+    <span id="userBadge">admin</span>
+    <button class="link-btn" id="logoutBtn">esci</button>
+  </div>
+</aside>
+
+<div class="sidebar-overlay" id="sidebarOverlay" hidden></div>
+
+<main class="chat-main">
+  <header class="chat-header">
+    <button class="icon-btn chat-header-menu" id="mobileMenuBtn" aria-label="Apri menu">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <h1 id="chatTitle" class="chat-title display" tabindex="0" role="button" aria-label="Titolo della conversazione, click per rinominare" title="Click per rinominare">Nuova conversazione</h1>
+    <input type="text" class="chat-title-input" id="chatTitleInput" hidden>
+    <div class="chat-actions">
+      <button class="icon-btn" id="renameBtn" title="Rinomina" aria-label="Rinomina conversazione">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+      <button class="icon-btn" id="deleteBtn" title="Sposta nel cestino" aria-label="Sposta nel cestino">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="messages" id="messages" role="log" aria-label="Messaggi della conversazione">
+    <div class="empty-state" id="emptyState"></div>
+  </section>
+
+  <button class="jump-to-bottom" id="jumpToBottom" hidden aria-label="Vai all'ultimo messaggio">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    <span>Nuovi messaggi</span>
+  </button>
+
+  <form class="composer" id="composer">
+    <div class="composer-wrap">
+      <textarea id="composerInput" placeholder="Chiedi qualsiasi cosa..." rows="1" aria-label="Messaggio"></textarea>
+      <button type="submit" id="sendBtn" class="composer-btn send" aria-label="Invia">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+      <button type="button" id="stopBtn" class="composer-btn stop" hidden aria-label="Ferma generazione">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>
+      </button>
+    </div>
+    <div class="composer-hint"><kbd>Invio</kbd> per inviare · <kbd>Shift</kbd>+<kbd>Invio</kbd> per andare a capo · <kbd>/</kbd> per focus</div>
+  </form>
+</main>
+
+<!-- Settings modal -->
+<div class="modal-backdrop" id="settingsModal" hidden role="dialog" aria-labelledby="settingsTitle" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="settingsTitle">Impostazioni</h2>
+      <button class="icon-btn" id="closeSettingsBtn" title="Chiudi" aria-label="Chiudi">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-section">
+        <h3>Steam</h3>
+        <p class="settings-hint">
+          API key da <a href="https://steamcommunity.com/dev/apikey" target="_blank" rel="noopener">steamcommunity.com/dev/apikey</a>.
+          SteamID64 è un numero a 17 cifre — su <a href="https://steamdb.info/calculator/" target="_blank" rel="noopener">steamdb.info/calculator</a>
+          incolla l'URL del tuo profilo per ottenerlo.
+        </p>
+        <label class="settings-label">STEAM_API_KEY
+          <input type="password" id="steamKeyInput" autocomplete="off" placeholder="(non impostata)">
+        </label>
+        <label class="settings-label">STEAM_ID
+          <input type="text" id="steamIdInput" inputmode="numeric" placeholder="76561198...">
+        </label>
+        <div class="settings-row">
+          <button class="btn-primary" id="testSteamBtn" type="button">Test connessione</button>
+          <span class="settings-result" id="steamResult"></span>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>Jellyfin</h3>
+        <p class="settings-hint">
+          Dashboard → API Keys → New. User ID dal pannello utente o
+          <code>curl -H "X-Emby-Token: KEY" .../Users/Me</code>.
+        </p>
+        <label class="settings-label">JELLYFIN_BASE_URL
+          <input type="text" id="jellyUrlInput" placeholder="http://127.0.0.1:8096">
+        </label>
+        <label class="settings-label">JELLYFIN_API_KEY
+          <input type="password" id="jellyKeyInput" autocomplete="off" placeholder="(non impostata)">
+        </label>
+        <label class="settings-label">JELLYFIN_USER_ID
+          <input type="text" id="jellyUserInput" placeholder="abc123...">
+        </label>
+        <div class="settings-row">
+          <button class="btn-primary" id="testJellyBtn" type="button">Test connessione</button>
+          <span class="settings-result" id="jellyResult"></span>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>Profilo gusti</h3>
+        <p class="settings-hint">Forza il refresh della cache (TTL 5 min) e mostra cosa viene inviato al backend.</p>
+        <div class="settings-row">
+          <button class="btn-primary" id="refreshTasteBtn" type="button">Ricalcola</button>
+          <span class="settings-result" id="tasteResult"></span>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>Aspetto</h3>
+        <p class="settings-hint">Scegli il tema dell'interfaccia.</p>
+        <div class="settings-row theme-row">
+          <button class="theme-chip" data-theme="dark">Scuro</button>
+          <button class="theme-chip" data-theme="light">Chiaro</button>
+          <button class="theme-chip" data-theme="auto">Auto</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <span class="settings-result" id="saveResult"></span>
+      <button class="btn-primary" id="saveSettingsBtn">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm modal (custom delete confirmation) -->
+<div class="modal-backdrop" id="confirmModal" hidden role="dialog" aria-labelledby="confirmTitle" aria-modal="true">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2 id="confirmTitle">Conferma</h2>
+    </div>
+    <div class="modal-body">
+      <p id="confirmMsg" class="confirm-msg">Sei sicuro?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" id="confirmCancelBtn" type="button">Annulla</button>
+      <button class="btn-danger" id="confirmOkBtn" type="button">Conferma</button>
+    </div>
+  </div>
+</div>
+
+<!-- Shortcut sheet -->
+<div class="modal-backdrop" id="shortcutsModal" hidden role="dialog" aria-labelledby="shortcutsTitle" aria-modal="true">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2 id="shortcutsTitle">Scorciatoie</h2>
+      <button class="icon-btn" id="closeShortcutsBtn" aria-label="Chiudi">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <dl class="shortcut-list">
+        <dt><kbd>/</kbd></dt><dd>Focus sulla casella di scrittura</dd>
+        <dt><kbd>⌘ Shift K</kbd></dt><dd>Focus sulla casella di scrittura (Mac)</dd>
+        <dt><kbd>⌘ Shift N</kbd></dt><dd>Nuova chat (Mac)</dd>
+        <dt><kbd>Ctrl Shift K</kbd></dt><dd>Focus (Win/Linux)</dd>
+        <dt><kbd>Ctrl Shift N</kbd></dt><dd>Nuova chat (Win/Linux)</dd>
+        <dt><kbd>⌘ /</kbd> <span style="color:var(--text-muted)">o</span> <kbd>Ctrl /</kbd></dt><dd>Mostra scorciatoie</dd>
+        <dt><kbd>Esc</kbd></dt><dd>Chiudi modal / annulla</dd>
+        <dt><kbd>Invio</kbd></dt><dd>Invia messaggio</dd>
+        <dt><kbd>Shift</kbd>+<kbd>Invio</kbd></dt><dd>A capo</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+
+<!-- Toast region -->
+<div class="toast-region" id="toastRegion" aria-live="polite"></div>
+
+<!-- Visually-hidden screen-reader announcer for new assistant messages and
+     other ambient state changes. The .messages region is aria-live=polite
+     for the main flow; this is a peer that batches *summaries* (e.g.
+     "Risposta ricevuta", "Strumento eseguito: ...") so AT users get a
+     condensed signal instead of every streamed token. -->
+<div class="sr-only" id="liveRegion" aria-live="polite" aria-atomic="true"></div>
+
+<script src="/static/js/utils.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
