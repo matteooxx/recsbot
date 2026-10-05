@@ -1,5 +1,7 @@
 # recsbot
 
+Built by Matteo Mastore — [matteomastore.com](https://matteomastore.com)
+
 Self-hosted recommendation chat. The backend (FastAPI) stores conversations,
 preferences, and feedback, and streams recommendations over server-sent
 events. The web UI (Flask) handles login, proxies the backend's JSON and SSE
